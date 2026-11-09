@@ -1,0 +1,69 @@
+CONVITE DIGITAL DE 15 ANOS — HTML/CSS/JS + GOOGLE APPS SCRIPT
+
+O QUE ESTE PROJETO FAZ
+- Exibe um convite digital responsivo.
+- Permite selecionar de 1 até o limite configurado de convidados.
+- Cria um campo obrigatório para cada pessoa.
+- Valida os nomes no navegador e novamente no Apps Script.
+- Registra cada confirmação em uma planilha Google.
+- Envia e-mail ao administrador após gravar a confirmação.
+- Permite ativar uma galeria de fotos e vídeos após o evento.
+- Exibe no rodapé “Desenvolvido por Ricardo Silva”, com o Instagram abrindo em nova guia.
+
+IMPORTANTE
+O projeto usa o Google Apps Script como hospedagem e processamento. Não exige servidor pago.
+A conta Google precisa autorizar o acesso à planilha e ao envio de e-mails.
+O envio de e-mail está sujeito às cotas vigentes do Google Apps Script.
+Não há confirmação automática para o convidado por e-mail; a confirmação é exibida na própria página e o administrador recebe a notificação.
+
+CONFIGURAÇÃO
+1. Entre em https://script.google.com/ com a conta Google que administrará as confirmações.
+2. Crie um Novo projeto.
+3. Substitua o conteúdo do arquivo Code.gs pelo conteúdo de Code.gs deste pacote.
+4. Crie um arquivo HTML chamado Index e cole o conteúdo de Index.html.
+5. Crie outro arquivo HTML chamado Styles e cole o conteúdo de Styles.html.
+6. No início de Code.gs, altere:
+   - ADMIN_EMAIL: e-mail que receberá as confirmações.
+   - EVENT_TITLE: título do convite.
+   - HONOREE_NAME: nome da aniversariante.
+   - EVENT_DATE: data.
+   - EVENT_TIME: horário.
+   - EVENT_ADDRESS: endereço.
+   - RSVP_DEADLINE: prazo para confirmar.
+   - MAX_GUESTS_PER_RESPONSE: máximo de pessoas por confirmação.
+7. Salve o projeto.
+8. Clique em Implantar > Nova implantação.
+9. Selecione “Aplicativo da Web”.
+10. Executar como: “Eu”.
+11. Quem pode acessar: “Qualquer pessoa” (se essa opção estiver disponível na conta).
+12. Clique em Implantar, autorize as permissões e copie o URL do aplicativo da Web.
+13. Abra o URL em uma janela anônima para testar como convidado.
+
+PLANILHA
+Na primeira confirmação, o sistema cria automaticamente uma planilha chamada “Confirmações — [título do evento]”, com uma aba “Confirmações”.
+O proprietário do projeto poderá localizar a planilha no Google Drive.
+Se preferir usar uma planilha existente, preencha SPREADSHEET_ID no Code.gs com o ID dela.
+
+GALERIA APÓS A FESTA
+No Code.gs, edite GALLERY_ITEMS.
+Exemplo:
+[
+  { type: "image", url: "https://SEU-LINK-PUBLICO/foto1.jpg", caption: "Um momento especial" },
+  { type: "video", url: "https://SEU-LINK-PUBLICO/video1.mp4", caption: "A festa" }
+]
+Os links precisam ser acessíveis aos visitantes sem login. Para vídeos grandes, use uma plataforma de vídeo ou hospedagem que permita reprodução incorporada/arquivo público. Evite tornar públicos arquivos pessoais sem revisar as permissões.
+
+TESTE OBRIGATÓRIO ANTES DE DIVULGAR
+- Teste com 1 pessoa.
+- Teste com 2 pessoas.
+- Tente enviar com um nome vazio: deve bloquear.
+- Confirme que a linha foi gravada na planilha.
+- Confirme que o e-mail chegou ao administrador.
+- Teste em celular e computador.
+- Faça uma confirmação de teste e apague a linha correspondente antes de divulgar.
+
+OBSERVAÇÕES TÉCNICAS
+- O formulário não coleta telefone, e-mail nem outros dados além dos nomes.
+- A confirmação é registrada no envio; não há edição/cancelamento pelo convidado nesta primeira versão.
+- O sistema não impede que a mesma família envie mais de uma confirmação. Para impedir duplicidades será necessário definir uma regra de identificação, como telefone ou código individual.
+- A disponibilidade pública do Apps Script e as cotas de execução/e-mail dependem das regras da conta Google e podem mudar.
