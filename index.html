@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17151b">
+  <title>Convite de 15 anos</title>
+  <?!= include("Styles"); ?>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-shade"></div>
+    <main class="hero-content">
+      <p class="eyebrow">UM DIA ESPECIAL</p>
+      <p class="script-label">Você é nosso convidado</p>
+      <h1 id="honoreeName"></h1>
+      <p class="age">15 anos</p>
+      <div class="event-details">
+        <p id="eventDate"></p>
+        <p id="eventTime"></p>
+        <p id="eventAddress"></p>
+      </div>
+      <a class="primary-link" href="#confirmacao">CONFIRMAR PRESENÇA</a>
+    </main>
+  </header>
+
+  <main>
+    <section class="rsvp section" id="confirmacao">
+      <p class="eyebrow">SERÁ UMA ALEGRIA TER VOCÊ CONOSCO</p>
+      <h2>Confirme sua presença</h2>
+      <p class="section-intro" id="deadline"></p>
+
+      <form id="rsvpForm" novalidate>
+        <label for="guestCount">Quantas pessoas irão?</label>
+        <select id="guestCount" name="guestCount" required></select>
+
+        <div id="nameFields" class="name-fields"></div>
+
+        <button id="submitButton" type="submit">ENVIAR CONFIRMAÇÃO</button>
+        <p id="formMessage" class="form-message" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="gallery section" id="galeria" hidden>
+      <p class="eyebrow">LEMBRANÇAS</p>
+      <h2>Galeria do evento</h2>
+      <p class="section-intro">Fotos e vídeos desse dia especial.</p>
+      <div id="galleryGrid" class="gallery-grid"></div>
+    </section>
+  </main>
+
+  <footer>
+    Desenvolvido por
+    <a href="https://www.instagram.com/ricardosilvainstaoficial"
+       target="_blank" rel="noopener noreferrer">Ricardo Silva</a>
+  </footer>
+
+  <script>
+    const CONFIG = <?!= JSON.stringify(config) ?>;
+
+    document.getElementById("honoreeName").textContent = CONFIG.honoreeName;
+    document.getElementById("eventDate").textContent = CONFIG.eventDate;
+    document.getElementById("eventTime").textContent = CONFIG.eventTime;
+    document.getElementById("eventAddress").textContent = CONFIG.eventAddress;
+    document.getElementById("deadline").textContent =
+      CONFIG.rsvpDeadline ? "Confirme até " + CONFIG.rsvpDeadline + "." : "";
+
+    const countSelect = document.getElementById("guestCount");
+    const nameFields = document.getElementById("nameFields");
+    const form = document.getElementById("rsvpForm");
+    const submitButton = document.getElementById("submitButton");
+    const formMessage = document.getElementById("formMessage");
+
+    for (let i = 1; i <= Number(CONFIG.maxGuests); i++) {
+      const option = document.createElement("option");
+      option.value = String(i);
+      option.textContent = i + (i === 1 ? " pessoa" : " pessoas");
+      countSelect.appendChild(option);
+    }
+
+    function renderNameFields() {
+      const count = Number(countSelect.value);
+      const previous = Array.from(nameFields.querySelectorAll("input")).map(x => x.value);
+      nameFields.replaceChildren();
+
+      for (let i = 0; i < count; i++) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "field";
+
+        const label = document.createElement("label");
+        label.htmlFor = "guestName" + i;
+        label.textContent = "Nome completo — pessoa " + (i + 1);
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.id = label.htmlFor;
+        input.name = "guestName";
+        input.autocomplete = "name";
+        input.maxLength = 120;
+        input.required = true;
+        input.placeholder = "Digite o nome completo";
+        input.value = previous[i] || "";
+
+        wrapper.append(label, input);
+        nameFields.appendChild(wrapper);
+      }
+    }
+
+    countSelect.addEventListener("change", renderNameFields);
+    renderNameFields();
+
+    form.addEventListener("submit", function(event) {
+      event.preventDefault();
+      formMessage.textContent = "";
+      formMessage.className = "form-message";
+
+      const inputs = Array.from(nameFields.querySelectorAll("input"));
+      const names = inputs.map(input => input.value.trim());
+
+      if (names.some(name => !name)) {
+        formMessage.textContent = "Preencha o nome completo de todas as pessoas.";
+        formMessage.classList.add("error");
+        const firstEmpty = inputs.find(input => !input.value.trim());
+        if (firstEmpty) firstEmpty.focus();
+        return;
+      }
+
+      if (names.some(name => name.length > 120)) {
+        formMessage.textContent = "Cada nome deve ter no máximo 120 caracteres.";
+        formMessage.classList.add("error");
+        return;
+      }
+
+      submitButton.disabled = true;
+      submitButton.textContent = "ENVIANDO...";
+
+      google.script.run
+        .withSuccessHandler(function(result) {
+          formMessage.textContent = result.message;
+          formMessage.classList.add("success");
+          form.reset();
+          countSelect.value = "1";
+          renderNameFields();
+          submitButton.textContent = "CONFIRMAÇÃO ENVIADA";
+          // Evita novo envio acidental após uma confirmação concluída.
+          countSelect.disabled = true;
+          nameFields.querySelectorAll("input").forEach(input => input.disabled = true);
+        })
+        .withFailureHandler(function(error) {
+          formMessage.textContent = error && error.message
+            ? error.message
+            : "Não foi possível enviar. Tente novamente.";
+          formMessage.classList.add("error");
+          submitButton.disabled = false;
+          submitButton.textContent = "ENVIAR CONFIRMAÇÃO";
+        })
+        .submitRsvp({ names: names });
+    });
+
+    function renderGallery(items) {
+      if (!Array.isArray(items) || items.length === 0) return;
+      const section = document.getElementById("galeria");
+      const grid = document.getElementById("galleryGrid");
+      section.hidden = false;
+
+      items.forEach(item => {
+        if (!item || !item.url || !["image", "video"].includes(item.type)) return;
+        const figure = document.createElement("figure");
+        let media;
+
+        if (item.type === "video") {
+          media = document.createElement("video");
+          media.controls = true;
+          media.playsInline = true;
+          media.preload = "metadata";
+        } else {
+          media = document.createElement("img");
+          media.loading = "lazy";
+          media.alt = item.caption || "Foto do evento";
+        }
+
+        media.src = item.url;
+        figure.appendChild(media);
+
+        if (item.caption) {
+          const caption = document.createElement("figcaption");
+          caption.textContent = item.caption;
+          figure.appendChild(caption);
+        }
+        grid.appendChild(figure);
+      });
+    }
+
+    renderGallery(CONFIG.galleryItems);
+  </script>
+</body>
+</html>
